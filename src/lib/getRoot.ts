@@ -8,6 +8,7 @@ export const getRoot: RequestHandler = async (_req, res) => {
     const data: GetRoot = {
       docs: "",
       sites: {},
+      version: "1.1.0",
     };
 
     data.docs = "https://github.com/falcon71181/Anime-API/blob/main/README.md";
