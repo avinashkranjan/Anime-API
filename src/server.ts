@@ -8,6 +8,8 @@ config(); // dotenv
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 
+// Trust reverse proxy
+app.set("trust proxy", true);
 //middlewares
 app.use(limiter);
 
