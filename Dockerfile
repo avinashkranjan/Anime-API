@@ -10,4 +10,4 @@ RUN npm install
 RUN npm run build
 
 CMD ["npm", "run", "start"]
-EXPOSE 3001
+EXPOSE 3000

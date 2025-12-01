@@ -9,6 +9,9 @@
     "build": "rimraf ./build && tsc",
     "vercel-build": "echo building"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
