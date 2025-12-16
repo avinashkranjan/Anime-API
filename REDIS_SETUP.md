@@ -18,12 +18,10 @@ Create a `.env` file in the root directory with the following variables:
 
 ```env
 # Redis Caching Configuration
+# Note: REDIS_MAX_MEMORY and REDIS_EVICTION_POLICY are server-side configurations
 REDIS_ENABLED=true
 REDIS_URL=redis://default:password@host:port
-REDIS_MAX_MEMORY=10gb
-REDIS_EVICTION_POLICY=allkeys-lru
 REDIS_MAX_RECONNECT_ATTEMPTS=50
-REDIS_CONNECTION_POOL_SIZE=50
 
 # Node Cache Configuration (used when Redis is disabled)
 NODE_CACHE_TTL=86400
@@ -31,16 +29,21 @@ NODE_CACHE_CHECK_PERIOD=600
 NODE_CACHE_MAX_KEYS=1000
 ```
 
+### Server-Side Redis Configuration
+
+Configure these on your Redis server (not in .env):
+- `maxmemory 10gb` - Maximum memory Redis can use
+- `maxmemory-policy allkeys-lru` - Eviction policy when memory is full
+
 ### Redis Configuration Explained
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `REDIS_ENABLED` | Enable/disable Redis caching | `false` |
 | `REDIS_URL` | Redis connection URL | - |
-| `REDIS_MAX_MEMORY` | Maximum memory for Redis | `10gb` |
-| `REDIS_EVICTION_POLICY` | Memory eviction policy | `allkeys-lru` |
+| `REDIS_MAX_MEMORY` | Maximum memory for Redis (server-side) | `10gb` |
+| `REDIS_EVICTION_POLICY` | Memory eviction policy (server-side) | `allkeys-lru` |
 | `REDIS_MAX_RECONNECT_ATTEMPTS` | Max reconnection attempts | `50` |
-| `REDIS_CONNECTION_POOL_SIZE` | Connection pool size | `50` |
 
 ### Node Cache Configuration
 
@@ -91,7 +94,9 @@ docker run -d \
   --name anime-api-redis \
   -p 6379:6379 \
   redis:alpine \
-  redis-server --maxmemory 10gb --maxmemory-policy allkeys-lru
+  redis-server \
+    --maxmemory 10gb \
+    --maxmemory-policy allkeys-lru
 ```
 
 Then set:
@@ -159,8 +164,8 @@ If Redis memory usage is too high:
 1. **Use Redis in Production**: Redis provides better performance and reliability
 2. **Adjust TTL Values**: Balance between cache hit rate and data freshness
 3. **Monitor Memory**: Keep an eye on Redis memory usage
-4. **Use Connection Pooling**: Already configured with `CONNECTION_POOL_SIZE`
-5. **Enable Persistence**: Configure Redis RDB or AOF for data durability (optional)
+4. **Enable Persistence**: Configure Redis RDB or AOF for data durability (optional)
+5. **Optimize SCAN**: The implementation uses SCAN instead of KEYS for better performance
 
 ## Migration from Node.js Cache to Redis
 
@@ -185,15 +190,19 @@ The cache will be empty initially, but will populate as requests come in.
 # Production Redis Setup
 REDIS_ENABLED=true
 REDIS_URL=rediss://default:secure-password@production-redis.example.com:6380
-REDIS_MAX_MEMORY=10gb
-REDIS_EVICTION_POLICY=allkeys-lru
 REDIS_MAX_RECONNECT_ATTEMPTS=50
-REDIS_CONNECTION_POOL_SIZE=50
 
 # Fallback Node Cache (if Redis fails)
 NODE_CACHE_TTL=86400
 NODE_CACHE_CHECK_PERIOD=600
 NODE_CACHE_MAX_KEYS=1000
+```
+
+### Redis Server Configuration (production)
+Configure these on your Redis server:
+```
+maxmemory 10gb
+maxmemory-policy allkeys-lru
 ```
 
 Note: `rediss://` (with double 's') indicates a TLS-encrypted connection.

@@ -86,11 +86,11 @@ class RedisCacheAdapter implements CacheAdapter {
   constructor() {
     const redisUrl = process.env.REDIS_URL || '';
     const maxReconnectAttempts = parseInt(process.env.REDIS_MAX_RECONNECT_ATTEMPTS || '50', 10);
-    const connectionPoolSize = parseInt(process.env.REDIS_CONNECTION_POOL_SIZE || '50', 10);
 
     this.client = new Redis(redisUrl, {
       maxRetriesPerRequest: maxReconnectAttempts,
       lazyConnect: true,
+      enableReadyCheck: true,
       retryStrategy: (times: number) => {
         if (times > maxReconnectAttempts) {
           console.error('Redis: Max reconnection attempts reached');
@@ -150,7 +150,21 @@ class RedisCacheAdapter implements CacheAdapter {
 
   async keys(): Promise<string[]> {
     try {
-      return await this.client.keys('*');
+      const allKeys: string[] = [];
+      let cursor = '0';
+      
+      // Use SCAN instead of KEYS for better performance
+      do {
+        const [newCursor, keys] = await this.client.scan(
+          cursor,
+          'MATCH', '*',
+          'COUNT', '100'
+        );
+        cursor = newCursor;
+        allKeys.push(...keys);
+      } while (cursor !== '0');
+      
+      return allKeys;
     } catch (error) {
       console.error('Redis keys error:', error);
       return [];
