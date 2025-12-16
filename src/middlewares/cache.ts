@@ -119,6 +119,8 @@ class AdvancedCache {
           // Handle ECACHEFULL error gracefully
           if (error.errorcode === 'ECACHEFULL') {
             // Clear 10% of the cache to make room for new entries
+            // Note: keys() doesn't guarantee order, but this simple eviction
+            // strategy prevents cache overflow errors
             const keys = this.cache.keys();
             const keysToDelete = Math.ceil(keys.length * 0.1);
             for (let i = 0; i < keysToDelete && i < keys.length; i++) {
