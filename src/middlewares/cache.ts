@@ -113,7 +113,29 @@ class AdvancedCache {
       // Override res.json to cache the response
       const originalJson = res.json.bind(res);
       res.json = (body: any) => {
-        this.cache.set(cacheKey, body, finalConfig.duration);
+        try {
+          this.cache.set(cacheKey, body, finalConfig.duration);
+        } catch (error: any) {
+          // Handle ECACHEFULL error gracefully
+          if (error.errorcode === 'ECACHEFULL') {
+            // Clear 10% of the cache to make room for new entries
+            const keys = this.cache.keys();
+            const keysToDelete = Math.ceil(keys.length * 0.1);
+            for (let i = 0; i < keysToDelete && i < keys.length; i++) {
+              this.cache.del(keys[i]);
+            }
+            // Try to set the cache again after clearing space
+            try {
+              this.cache.set(cacheKey, body, finalConfig.duration);
+            } catch (retryError) {
+              // If it still fails, just continue without caching
+              console.error('Failed to cache response after clearing space:', retryError);
+            }
+          } else {
+            // Log other cache errors but don't crash
+            console.error('Cache error:', error);
+          }
+        }
         return originalJson(body);
       };
 
